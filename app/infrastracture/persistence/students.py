@@ -66,6 +66,46 @@ class StudentRepository:
 
         return self.insert_students(students)
 
+    def get_student(self, student_id: int) -> Student | None:
+        """Получение данных студента."""
+        with self.session() as session:
+            return session.get(Student, student_id)
+
+    def list_students(self, limit: int, offset: int) -> list[Student]:
+        """Возврат стуентов с пагинацией."""
+        with self.session() as session:
+            query = (
+                select(Student)
+                .order_by(Student.id)
+                .limit(limit)
+                .offset(offset)
+            )
+            return list(session.scalars(query))
+
+    def update_student(
+            self, student_id: int, fields: dict[str, str | int]
+    ) -> Student | None:
+        """Обновление данных студента."""
+        with self.session() as session:
+            student = session.get(Student, student_id)
+            if student is None:
+                return None
+            for field, value in fields.items():
+                setattr(student, field, value)
+            session.commit()
+            session.refresh(student)
+            return student
+
+    def delete_student(self, student_id: int) -> bool:
+        """Удаление студента."""
+        with self.session() as session:
+            student = session.get(Student, student_id)
+            if student is None:
+                return False
+            session.delete(student)
+            session.commit()
+            return True
+
     def select_by_faculty(self, faculty: str) -> list[Student]:
         """Студенты по факультативу."""
         with self.session() as session:
